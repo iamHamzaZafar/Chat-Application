@@ -61,4 +61,30 @@ const signup = async (req, res) => {
   }
 };
 
-module.exports = { signup };
+// verifyEmailController
+
+const verifyEmailController = async (req, res) => {
+  const { token, email } = req.query;
+  console.log(token, email);
+  try {
+    const user = await User.findOne({ email, verificationToken: token });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or expired verification link." });
+    }
+    // user found .
+    user.isVerified = true;
+    user.verificationToken = null; // clear the token.
+
+    // save the user .
+    await user.save();
+
+    // return the respomce of success
+    res.status(200).json({ message: "Email successfully verified!" });
+  } catch (error) {
+    console.error("Error verifying email:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+module.exports = { signup, verifyEmailController };
