@@ -1,7 +1,7 @@
 const nodemailer = require("nodemailer");
 
 const sendEmail = (email, token) => {
-  const verificationLink = `http://your-backend.com/verify-email?token=${token}&email=${email}`;
+  const verificationLink = `http://localhost:3000/api/v1/auth/verify-email?token=${token}&email=${email}`;
 
   // Configure the transporter
   const transporter = nodemailer.createTransport({
@@ -16,11 +16,11 @@ const sendEmail = (email, token) => {
   const mailOptions = {
     from: "imhamzee@gmail.com",
     to: email,
-    subject: "Verify Your Email - Welcome to [Your App Name]",
+    subject: "Verify Your Email - Welcome to [Your App NameChat Application]",
     text: `
 Hi there,
 
-Welcome to [Your App Name]!
+Welcome to [Chat Application]!
 
 We're excited to have you on board. To get started, please verify your email by clicking the link below:
 
