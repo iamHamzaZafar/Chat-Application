@@ -4,6 +4,7 @@ const {
   generateVerificationToken,
 } = require("../config/generateVerificationToken");
 const validator = require("validator");
+const { sendEmail } = require("../config/nodeMailer");
 
 const signup = async (req, res) => {
   const { username, password, email } = req.body;
@@ -48,7 +49,8 @@ const signup = async (req, res) => {
     });
 
     await newUser.save();
-
+    // send the email to the user.
+    await sendEmail(email, verificationToken);
     res.status(201).json({
       message:
         "Signup successful! Please verify your email to activate your account.",
