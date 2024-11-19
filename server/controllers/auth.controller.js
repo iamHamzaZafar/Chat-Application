@@ -5,6 +5,7 @@ const {
 } = require("../config/generateVerificationToken");
 const validator = require("validator");
 const { sendEmail } = require("../config/nodeMailer");
+const jwt = require("jsonwebtoken");
 
 const signup = async (req, res) => {
   const { username, password, email } = req.body;
@@ -87,4 +88,50 @@ const verifyEmailController = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-module.exports = { signup, verifyEmailController };
+
+// api for the login user.
+
+const login = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(401)
+        .json({ message: "User does not exists with this email" });
+    }
+
+    // user found now compare the password.
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(401).json({ message: "Incorrect email or Password" });
+    }
+
+    // Convert Mongoose document to plain JavaScript object
+    const userObject = user.toObject();
+    // logic for if the user is not verfied yet and try to login.
+    const isUserVerified = userObject.isVerified;
+    if (!isUserVerified) {
+      const verificationToken = await generateVerificationToken();
+      sendEmail(email, verificationToken);
+      res.status(201).json({
+        message:
+          "Your Account is not verified Please verify your email to activate your account.",
+      });
+    }
+    // password matched.
+    delete userObject.password;
+    console.log("User details are :", userObject);
+    // now create the jwt token.
+    const jwtToken = jwt.sign(userObject, process.env.JWT_SECRET, {
+      expiresIn: "90d",
+    });
+    // send this token to the user.
+    return res
+      .status(201)
+      .json({ message: "Login successfull", userObject, jwtToken });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+module.exports = { signup, verifyEmailController, login };
