@@ -134,4 +134,10 @@ const login = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
-module.exports = { signup, verifyEmailController, login };
+
+
+// function to edit the user details;
+const editUserDetails = async (req , res)=>{
+
+}
+module.exports = { signup, verifyEmailController, login , editUserDetails};
