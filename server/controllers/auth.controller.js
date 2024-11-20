@@ -135,9 +135,48 @@ const login = async (req, res) => {
   }
 };
 
-
 // function to edit the user details;
-const editUserDetails = async (req , res)=>{
+const editUserDetails = async (req, res) => {
+  const { username, password } = req.body;
+  
+  const userId = req.user._id; // Assuming `req.user` contains the authenticated user's ID
+  
 
-}
-module.exports = { signup, verifyEmailController, login , editUserDetails};
+  try {
+    // Fetch the user by ID
+    const user = await User.findById(userId); // Correct usage of findById
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Check if either username or password is provided
+    if (!username && !password) {
+      return res.status(400).json({ message: "Please provide data to update." });
+    }
+
+    // Update username if provided
+    if (username) {
+      user.username = username;
+    }
+
+    // Update password if provided
+    if (password) {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      user.password = hashedPassword;
+    }
+
+    // Save the updated user document
+    await user.save();
+
+    // Respond to the client
+    res.status(200).json({ message: "Profile updated successfully." });
+  } catch (error) {
+    console.error("Error updating profile:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+module.exports = { editUserDetails };
+
+module.exports = { signup, verifyEmailController, login, editUserDetails };
