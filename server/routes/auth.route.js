@@ -3,7 +3,8 @@ const {
   signup,
   verifyEmailController,
   login,
-  editUserDetails
+  editUserDetails,
+  logoutUser
 } = require("../controllers/auth.controller");
 const { isAuthenticated } = require("../middlewares/isLoggedin");
 const router = express.Router();
@@ -16,5 +17,7 @@ router.get("/verify-email", verifyEmailController);
 router.post("/login", login);
 // route to edit the profile.
 router.put("/edit-profile/:id", isAuthenticated, editUserDetails);
+// route to logout profile.
+router.get('/logout' , logoutUser)
 
 module.exports = router;

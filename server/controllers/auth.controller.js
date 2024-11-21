@@ -6,6 +6,7 @@ const {
 const validator = require("validator");
 const { sendEmail } = require("../config/nodeMailer");
 const jwt = require("jsonwebtoken");
+const { BlackList } = require("../models/blackList.model");
 
 const signup = async (req, res) => {
   const { username, password, email } = req.body;
@@ -138,9 +139,8 @@ const login = async (req, res) => {
 // function to edit the user details;
 const editUserDetails = async (req, res) => {
   const { username, password } = req.body;
-  
+
   const userId = req.user._id; // Assuming `req.user` contains the authenticated user's ID
-  
 
   try {
     // Fetch the user by ID
@@ -151,7 +151,9 @@ const editUserDetails = async (req, res) => {
 
     // Check if either username or password is provided
     if (!username && !password) {
-      return res.status(400).json({ message: "Please provide data to update." });
+      return res
+        .status(400)
+        .json({ message: "Please provide data to update." });
     }
 
     // Update username if provided
@@ -177,6 +179,45 @@ const editUserDetails = async (req, res) => {
   }
 };
 
-module.exports = { editUserDetails };
+// controller to logout the user
+const logoutUser = async (req, res) => {
+  const accessToken = req.headers["authorization"]?.replace("Bearer ", "");
 
-module.exports = { signup, verifyEmailController, login, editUserDetails };
+  // Check if token is provided
+  if (!accessToken) {
+    return res.status(400).json({ message: "Token not provided" });
+  }
+
+  try {
+    // Check if the token is already blacklisted
+    const checkIfBlacklisted = await BlackList.findOne({ token: accessToken });
+    if (checkIfBlacklisted) {
+      console.log("Token already blacklisted");
+      return res.status(403).json({ message: "Token already invalidated" });
+    }
+
+    // Add token to the blacklist
+    const newBlacklist = new BlackList({ token: accessToken });
+    await newBlacklist.save();
+
+    // Inform client to clear cookies
+    res.setHeader("Clear-Site-Data", '"cookies"');
+
+    // Respond with success
+    res.status(200).json({ message: "You have been successfully logged out!" });
+  } catch (err) {
+    console.error("Error during logout:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Internal Server Error",
+    });
+  }
+};
+
+module.exports = {
+  signup,
+  verifyEmailController,
+  login,
+  editUserDetails,
+  logoutUser,
+};
