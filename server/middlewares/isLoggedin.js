@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const { BlackList } = require("../models/blackList.model");
 
-const isAuthenticated = (req, res, next) => {
+const isAuthenticated = async (req, res, next) => {
   try {
     // Ensure the Authorization header exists and extract the token
     const token = req.headers["authorization"]?.replace("Bearer ", "");
@@ -8,6 +9,13 @@ const isAuthenticated = (req, res, next) => {
       return res.status(401).json({ message: "Not authorized, token missing" });
     }
 
+    // check token is already blacklisted or not.
+    const isBlackListed = await BlackList.findOne({ token: token });
+    if (isBlackListed) {
+      return res
+        .status(401)
+        .json({ message: "This session has expired. Please login" });
+    }
     // Verify the token
     const verifyToken = jwt.verify(token, process.env.JWT_SECRET);
     req.user = verifyToken;
